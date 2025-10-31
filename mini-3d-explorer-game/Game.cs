@@ -113,10 +113,10 @@ namespace explorer
         private readonly float[] _vertices =
         {
             // Position         Texture coordinates
-             0.5f,  0.5f, 0.0f, 1.0f, 1.0f, // top right
-             0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
-            -0.5f,  0.5f, 0.0f, 0.0f, 1.0f  // top left
+             0.5f,  0.5f, 0.0f, 0, 0, 0, 1, 0, 0, 1.0f, 1.0f, // top right
+             0.5f, -0.5f, 0.0f, 0, 0, 0, 0, 1, 0, 1.0f, 0.0f, // bottom right
+            -0.5f, -0.5f, 0.0f, 0, 0, 0, 0, 0, 1, 0.0f, 0.0f, // bottom left
+            -0.5f,  0.5f, 0.0f, 0, 0, 0, 1, 1, 1, 0.0f, 1.0f  // top left
         };
 
         private readonly uint[] _indices =
@@ -178,11 +178,15 @@ namespace explorer
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
             _shader.Use();
 
+            const int totalStride = (3 + 3 + 3 + 2) * sizeof(float);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, totalStride, 0); // vertex shader layout location 0 position
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, totalStride, 12); // vertex shader layout location 1 normal
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, totalStride, 24); // vertex shader layout location 2 colour
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, totalStride, 36); // vertex shader layout location 2 texture
+            GL.EnableVertexAttribArray(3);
 
             _texture = Texture.LoadFromFile("Assets/wall.jpg");
             _texture.Use(TextureUnit.Texture0);
