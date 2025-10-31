@@ -119,6 +119,7 @@ namespace explorer
 
     public class CubeMesh
     {
+        public int vertexArrayObject;
         public int vertexBufferHandle;
         public int vertexCount;
         public int elementBufferHandle;
@@ -149,6 +150,9 @@ namespace explorer
                 top.v00, top.v01, top.v11, top.v10
             };
 
+            vertexArrayObject = GL.GenVertexArray();
+            GL.BindVertexArray(vertexArrayObject);
+
             vertexBufferHandle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float) * (3 + 3 + 3 + 2), vertices, BufferUsageHint.StaticDraw);
@@ -178,6 +182,16 @@ namespace explorer
             elementBufferHandle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferHandle);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
+            const int totalStride = (3 + 3 + 3 + 2) * sizeof(float);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, totalStride, 0); // vertex shader layout location 0 position
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, totalStride, 12); // vertex shader layout location 1 normal
+            GL.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, totalStride, 24); // vertex shader layout location 2 colour
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, totalStride, 36); // vertex shader layout location 2 texture
+            GL.EnableVertexAttribArray(3);
         }
 
         public void draw()

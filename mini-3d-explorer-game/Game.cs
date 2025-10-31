@@ -132,10 +132,6 @@ namespace explorer
             5, 6, 7
         };
 
-        private int _elementBufferObject;
-
-        private int _vertexBufferObject;
-
         private int _vertexArrayObject;
 
         private Shader _shader;
@@ -154,7 +150,7 @@ namespace explorer
 
         private Vector2 _lastPos;
 
-        private CubeMesh _mesh;
+        private CubeMesh[] _mesh;
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -172,7 +168,15 @@ namespace explorer
             _vertexArrayObject = GL.GenVertexArray();
             GL.BindVertexArray(_vertexArrayObject);
 
-            _mesh = new CubeMesh(Vector3.Zero, 1);
+            _mesh = new CubeMesh[] 
+            {
+                // base
+                new CubeMesh(new Vector3(0, -1, 0), 1), new CubeMesh(new Vector3(1, -1, 0), 1), new CubeMesh(new Vector3(2, -1, 0), 1),
+                new CubeMesh(new Vector3(0, -1, 1), 1), new CubeMesh(new Vector3(2, -1, 1), 1),
+                new CubeMesh(new Vector3(0, -1, 2), 1), new CubeMesh(new Vector3(1, -1, 2), 1), new CubeMesh(new Vector3(2, -1, 2), 1),
+
+            };
+
 
             //_vertexBufferObject = GL.GenBuffer();
             //GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -203,7 +207,7 @@ namespace explorer
 
             // We initialize the camera so that it is 3 units back from where the rectangle is.
             // We also give it the proper aspect ratio.
-            _camera = new Camera(Vector3.UnitZ * 3, Size.X / (float)Size.Y);
+            _camera = new Camera(new Vector3(0, 0.5f, 4), Size.X / (float)Size.Y);
 
             // We make the mouse cursor invisible and captured so we can have proper FPS-camera movement.
             CursorState = CursorState.Grabbed;
@@ -215,7 +219,7 @@ namespace explorer
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindVertexArray(_vertexArrayObject);
+            
 
             _texture.Use(TextureUnit.Texture0);
             _shader.Use();
@@ -225,7 +229,11 @@ namespace explorer
             _shader.SetMatrix4("view", _camera.GetViewMatrix());
             _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
 
-            GL.DrawElements(PrimitiveType.Triangles, _mesh.indices.Length, DrawElementsType.UnsignedInt, 0);
+            foreach (CubeMesh mesh in _mesh)
+            {
+                GL.BindVertexArray(mesh.vertexArrayObject);
+                GL.DrawElements(PrimitiveType.Triangles, mesh.indices.Length, DrawElementsType.UnsignedInt, 0);
+            }
 
             SwapBuffers();
         }
