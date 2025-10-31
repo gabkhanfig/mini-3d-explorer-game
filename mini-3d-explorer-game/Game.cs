@@ -12,102 +12,6 @@ using System.Threading.Tasks;
 
 namespace explorer
 {
-    //internal class Game : GameWindow
-    //{
-    //    public Shader? shader;
-    //    public Camera camera;
-    //    public CubeMesh[] cubes;
-    //    public Texture tex;
-    //    public int vertexArrayHandle;
-
-    //    public Game()
-    //        : base(GameWindowSettings.Default, NativeWindowSettings.Default)
-    //    {
-    //        this.Size = new Vector2i(768, 768);
-
-    //        this.camera = new Camera(new Vector3(0, 0, 10), 1);
-
-    //        this.CenterWindow(this.Size);
-    //    }
-
-    //    protected override void OnResize(ResizeEventArgs e)
-    //    {
-    //        GL.Viewport(0, 0, e.Width, e.Height);
-    //        base.OnResize(e);
-    //    }
-
-    //    protected override void OnLoad()
-    //    {
-    //        base.OnLoad();
-
-    //        GL.ClearColor(new Color4(0.5f, 0.7f, 0.8f, 1f));
-    //        //GL.Enable(EnableCap.CullFace);
-    //        //GL.CullFace(CullFaceMode.Front);
-
-    //        cubes = new CubeMesh[] { 
-    //            new CubeMesh(new Vector3(-0.25f, -0.25f, -0.25f), 0.5f),
-    //            new CubeMesh(new Vector3(-10, -5, 0), -.5f)
-    //        };
-
-    //        vertexArrayHandle = GL.GenVertexArray();
-
-    //        shader = new Shader(Shader.vertexShaderCode, Shader.fragmentShaderCode);
-
-    //        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-    //        string projectDirectory = Directory.GetParent(baseDir).Parent.Parent.Parent.FullName;
-    //        Console.WriteLine(projectDirectory);
-    //        string texturePath = Path.Combine(projectDirectory, "Assets", "wall.jpg");
-    //        Console.WriteLine(texturePath);
-    //        tex = new Texture(texturePath);
-    //    }
-
-    //    protected override void OnUpdateFrame(FrameEventArgs args)
-    //    {
-
-    //        camera.Update((float)args.Time, KeyboardState, MouseState);
-
-    //        // Console.WriteLine($"Camera Position: {camera.cameraPos.X}, {camera.cameraPos.Y}, {camera.cameraPos.Z}");
-
-    //        base.OnUpdateFrame(args);
-    //        // Handle input, animations, physics, AI, etc.
-    //    }
-
-    //    protected override void OnRenderFrame(FrameEventArgs args)
-    //    {
-    //        base.OnRenderFrame(args);
-
-    //        Matrix4 model = Matrix4.Identity;
-    //        Matrix4 view = camera.getView();
-    //        Matrix4 projection = camera.getProjection((float)this.Size.X, (float)this.Size.Y);
-
-    //        Console.Clear();
-    //        Console.WriteLine($"[{projection.M11,10:F5} {projection.M12,10:F5} {projection.M13,10:F5} {projection.M14,10:F5}]");
-    //        Console.WriteLine($"[{projection.M21,10:F5} {projection.M22,10:F5} {projection.M23,10:F5} {projection.M24,10:F5}]");
-    //        Console.WriteLine($"[{projection.M31,10:F5} {projection.M32,10:F5} {projection.M33,10:F5} {projection.M34,10:F5}]");
-    //        Console.WriteLine($"[{projection.M41,10:F5} {projection.M42,10:F5} {projection.M43,10:F5} {projection.M44,10:F5}]");
-
-    //        GL.Clear(ClearBufferMask.ColorBufferBit);
-
-    //        shader?.bind();
-    //        tex.bind();
-
-    //        shader?.setUniformMatrix4("model", model);
-    //        shader?.setUniformMatrix4("view", view);
-    //        shader?.setUniformMatrix4("projection", projection);
-
-    //        foreach (CubeMesh cube in cubes)
-    //        {
-    //            GL.BindVertexArray(vertexArrayHandle);
-    //            Vertex.setupVertexAttribLayout(vertexArrayHandle, cube.vertexBufferHandle);
-    //            GL.BindVertexArray(vertexArrayHandle);
-    //            cube.draw();
-    //            GL.BindVertexArray(0);
-    //        }
-
-    //        SwapBuffers();
-    //    }
-    //}
-
     public class Game : GameWindow
     {
         private readonly float[] _vertices =
@@ -151,6 +55,8 @@ namespace explorer
         private Vector2 _lastPos;
 
         private CubeMesh[] _mesh;
+
+        private PointLight[] _lights = Array.Empty<PointLight>();
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -231,10 +137,17 @@ namespace explorer
 
             Vector3 _lightPos = new Vector3(1.5f, 1.5f, 1.5f);
 
-            _shader.SetVector3("objectColor", new Vector3(1.0f, 0.5f, 0.31f));
-            _shader.SetVector3("lightColor", new Vector3(1.0f, 1.0f, 1.0f));
-            _shader.SetVector3("lightPos", _lightPos);
-            _shader.SetVector3("viewPos", _camera.Position);
+            int index = 0;
+            foreach(PointLight light in _lights)
+            {
+                string access = $"pointLights[{index}].";
+                _shader.SetVector3($"{access}objectColor", new Vector3(1.0f, 0.5f, 0.31f));
+                _shader.SetVector3($"{access}lightColor", new Vector3(1.0f, 1.0f, 1.0f));
+                _shader.SetVector3($"{access}lightPos", _lightPos);
+                _shader.SetVector3($"{access}viewPos", _camera.Position);
+                index++;
+            }
+            _shader.SetInt("lightCount", _lights.Length);
 
             foreach (CubeMesh mesh in _mesh)
             {

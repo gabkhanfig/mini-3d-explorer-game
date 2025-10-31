@@ -132,6 +132,14 @@ namespace explorer
     //    }
     //}
 
+    public struct PointLight
+    {
+        public Vector3 objectColor; //The color of the object.
+        public Vector3 lightColor; //The color of the light.
+        public Vector3 lightPos; //The position of the light.
+        public Vector3 viewPos; //The position of the view and/or of the player.
+    };
+
     // A simple class meant to help create shaders.
     public class Shader
     {
@@ -307,8 +315,8 @@ namespace explorer
         /// <param name="data">The data to set</param>
         public void SetVector3(string name, Vector3 data)
         {
-            GL.UseProgram(Handle);
-            GL.Uniform3(_uniformLocations[name], data);
+            int loc = GL.GetUniformLocation(Handle, name);
+            GL.Uniform3(loc, data);
         }
     }
 }
