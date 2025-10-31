@@ -127,12 +127,12 @@ namespace explorer
 
         public CubeMesh(Vector3 position, float length)
         {
-            Square bottom = new Square(position, length, Vector3.UnitY);
-            Square north = new Square(position, length, Vector3.UnitX);
-            Square east = new Square(position, length, Vector3.UnitZ);
-            Square south = new Square(new Vector3(position.X + length, position.Y, position.Z), length, -Vector3.UnitX);
-            Square west = new Square(new Vector3(position.X, position.Y, position.Z + length), length, -Vector3.UnitZ);
-            Square top = new Square(new Vector3(position.X, position.Y + length, position.Z), length, -Vector3.UnitY);
+            Square bottom = new Square(position, length, -Vector3.UnitY);
+            Square north = new Square(position, length, -Vector3.UnitX);
+            Square east = new Square(position, length, -Vector3.UnitZ);
+            Square south = new Square(new Vector3(position.X + length, position.Y, position.Z), length, Vector3.UnitX);
+            Square west = new Square(new Vector3(position.X, position.Y, position.Z + length), length, Vector3.UnitZ);
+            Square top = new Square(new Vector3(position.X, position.Y + length, position.Z), length, Vector3.UnitY);
 
 
             Vertex[] vertices = new Vertex[] // first three vertices are the position, next 3 are colour

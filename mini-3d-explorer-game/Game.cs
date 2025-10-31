@@ -186,7 +186,7 @@ namespace explorer
             //GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             //GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
-            _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
+            _shader = new Shader("Shaders/shader.vert", "Shaders/lighting.frag");
             _shader.Use();
 
             const int totalStride = (3 + 3 + 3 + 2) * sizeof(float);
@@ -228,6 +228,13 @@ namespace explorer
             _shader.SetMatrix4("model", model);
             _shader.SetMatrix4("view", _camera.GetViewMatrix());
             _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+
+            Vector3 _lightPos = new Vector3(1.5f, 1.5f, 1.5f);
+
+            _shader.SetVector3("objectColor", new Vector3(1.0f, 0.5f, 0.31f));
+            _shader.SetVector3("lightColor", new Vector3(1.0f, 1.0f, 1.0f));
+            _shader.SetVector3("lightPos", _lightPos);
+            _shader.SetVector3("viewPos", _camera.Position);
 
             foreach (CubeMesh mesh in _mesh)
             {
