@@ -112,17 +112,24 @@ namespace explorer
     {
         private readonly float[] _vertices =
         {
-            // Position         Texture coordinates
+            // Position         Normal   Colour   Texture coordinates
              0.5f,  0.5f, 0.0f, 0, 0, 0, 1, 0, 0, 1.0f, 1.0f, // top right
              0.5f, -0.5f, 0.0f, 0, 0, 0, 0, 1, 0, 1.0f, 0.0f, // bottom right
             -0.5f, -0.5f, 0.0f, 0, 0, 0, 0, 0, 1, 0.0f, 0.0f, // bottom left
-            -0.5f,  0.5f, 0.0f, 0, 0, 0, 1, 1, 1, 0.0f, 1.0f  // top left
+            -0.5f,  0.5f, 0.0f, 0, 0, 0, 1, 1, 1, 0.0f, 1.0f, // top left
+
+             0.5f, 0,  0.5f, 0, 0, 0, 1, 0, 0, 1.0f, 1.0f, // top right
+             0.5f, 0, -0.5f, 0, 0, 0, 0, 1, 0, 1.0f, 0.0f, // bottom right
+            -0.5f, 0, -0.5f, 0, 0, 0, 0, 0, 1, 0.0f, 0.0f, // bottom left
+            -0.5f, 0, 0.5f, 0, 0, 0, 1, 1, 1, 0.0f, 1.0f  // top left
         };
 
         private readonly uint[] _indices =
         {
             0, 1, 3,
-            1, 2, 3
+            1, 2, 3,
+            4, 5, 7,
+            5, 6, 7
         };
 
         private int _elementBufferObject;
@@ -135,8 +142,6 @@ namespace explorer
 
         private Texture _texture;
 
-        private Texture _texture2;
-
         // The view and projection matrices have been removed as we don't need them here anymore.
         // They can now be found in the new camera class.
 
@@ -148,8 +153,6 @@ namespace explorer
         private bool _firstMove = true;
 
         private Vector2 _lastPos;
-
-        private double _time;
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -206,8 +209,6 @@ namespace explorer
         {
             base.OnRenderFrame(e);
 
-            _time += 4.0 * e.Time;
-
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.BindVertexArray(_vertexArrayObject);
@@ -215,7 +216,7 @@ namespace explorer
             _texture.Use(TextureUnit.Texture0);
             _shader.Use();
 
-            var model = Matrix4.Identity * Matrix4.CreateRotationX((float)MathHelper.DegreesToRadians(_time));
+            var model = Matrix4.Identity;
             _shader.SetMatrix4("model", model);
             _shader.SetMatrix4("view", _camera.GetViewMatrix());
             _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
