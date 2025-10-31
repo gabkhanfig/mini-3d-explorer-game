@@ -121,6 +121,8 @@ namespace explorer
     {
         public int vertexBufferHandle;
         public int vertexCount;
+        public int elementBufferHandle;
+        public uint[] indices;
 
         public CubeMesh(Vector3 position, float length)
         {
@@ -131,32 +133,51 @@ namespace explorer
             Square west = new Square(new Vector3(position.X, position.Y, position.Z + length), length, -Vector3.UnitZ);
             Square top = new Square(new Vector3(position.X, position.Y + length, position.Z), length, -Vector3.UnitY);
 
+
             Vertex[] vertices = new Vertex[] // first three vertices are the position, next 3 are colour
             {
-                bottom.v00, bottom.v01, bottom.v11,
-                bottom.v00, bottom.v11, bottom.v10,
+                bottom.v00, bottom.v01, bottom.v11, bottom.v10,
 
-                north.v00, north.v10, north.v11,
-                north.v00, north.v11, north.v01,
+                north.v00, north.v01, north.v11, north.v10,
 
-                east.v01, east.v00, east.v10,
-                east.v01, east.v10, east.v11,
+                east.v00, east.v01, east.v11, east.v10,
 
-                south.v10, south.v00, south.v01,
-                south.v10, south.v01, south.v11,
+                south.v00, south.v01, south.v11, south.v10,
 
-                west.v00, west.v01, west.v11,
-                west.v00, west.v11, west.v10,
+                west.v00, west.v01, west.v11, west.v10,
 
-                top.v00, top.v10, top.v11,
-                top.v00, top.v11, top.v01
+                top.v00, top.v01, top.v11, top.v10
             };
 
             vertexBufferHandle = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float) * (3 + 3 + 3 + 2), vertices, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0); // Unbind to prevent accidental modifications
             vertexCount = vertices.Length;
+
+            indices = new uint[]
+            {
+                0, 1, 3, // bottom
+                1, 2, 3,
+
+                4, 5, 7, // north
+                5, 6, 7,
+
+                8, 9, 11, // east
+                9, 10, 11,
+
+                12, 13, 15, // south
+                13, 14, 15,
+
+                16, 17, 19, // west
+                17, 18, 19,
+
+                20, 21, 23, // top
+                21, 22, 23
+            };
+
+            elementBufferHandle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferHandle);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
         }
 
         public void draw()
