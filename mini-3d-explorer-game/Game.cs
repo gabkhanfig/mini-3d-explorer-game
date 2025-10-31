@@ -57,6 +57,7 @@ namespace explorer
         private CubeMesh[] _mesh;
 
         private PointLight[] _lights = Array.Empty<PointLight>();
+        private bool canSpawnLight = true;
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -66,6 +67,8 @@ namespace explorer
         protected override void OnLoad()
         {
             base.OnLoad();
+
+            Console.WriteLine("Press E to create a light where you are of a random colour");
 
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
@@ -125,8 +128,6 @@ namespace explorer
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            
-
             _texture.Use(TextureUnit.Texture0);
             _shader.Use();
 
@@ -135,15 +136,13 @@ namespace explorer
             _shader.SetMatrix4("view", _camera.GetViewMatrix());
             _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
 
-            Vector3 _lightPos = new Vector3(1.5f, 1.5f, 1.5f);
-
             int index = 0;
             foreach(PointLight light in _lights)
             {
                 string access = $"pointLights[{index}].";
-                _shader.SetVector3($"{access}objectColor", new Vector3(1.0f, 0.5f, 0.31f));
-                _shader.SetVector3($"{access}lightColor", new Vector3(1.0f, 1.0f, 1.0f));
-                _shader.SetVector3($"{access}lightPos", _lightPos);
+                _shader.SetVector3($"{access}objectColor", new Vector3(1.0f, 1.0f, 1.0f));
+                _shader.SetVector3($"{access}lightColor", light.lightColor);
+                _shader.SetVector3($"{access}lightPos", light.lightPos);
                 _shader.SetVector3($"{access}viewPos", _camera.Position);
                 index++;
             }
@@ -172,6 +171,32 @@ namespace explorer
             if (input.IsKeyDown(Keys.Escape))
             {
                 Close();
+            }
+
+            if(input.IsKeyPressed(Keys.E))
+            {
+                if (canSpawnLight == false || _lights.Length == 64) return;
+                canSpawnLight = false;
+
+                Random random = new Random();
+                Vector3 lightCol = new Vector3(
+                    (float)random.NextDouble() * (float)random.NextDouble(),
+                    (float)random.NextDouble() * (float)random.NextDouble(),
+                    (float)random.NextDouble() * (float)random.NextDouble()
+                );
+
+                PointLight light = new PointLight();
+                light.lightColor = lightCol;
+                light.lightPos = _camera.Position;
+
+                Console.WriteLine($"Creating new light at ({light.lightPos.X}, {light.lightPos.Y}, {light.lightPos.Z}), with colour ({light.lightColor.X}, {light.lightColor.Y}, {light.lightColor.Z})");
+                
+                AddLight(light);
+            }
+
+            if(input.IsKeyReleased(Keys.E))
+            {
+                canSpawnLight = true;
             }
 
             const float cameraSpeed = 1.5f;
@@ -240,6 +265,12 @@ namespace explorer
             GL.Viewport(0, 0, Size.X, Size.Y);
             // We need to update the aspect ratio once the window has been resized.
             _camera.AspectRatio = Size.X / (float)Size.Y;
+        }
+
+        private void AddLight(PointLight light)
+        {
+            Array.Resize(ref _lights, _lights.Length + 1);
+            _lights[_lights.Length - 1] = light;
         }
     }
 }
