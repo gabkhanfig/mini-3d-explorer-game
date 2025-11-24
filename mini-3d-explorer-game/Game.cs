@@ -14,30 +14,6 @@ namespace explorer
 {
     public class Game : GameWindow
     {
-        private readonly float[] _vertices =
-        {
-            // Position         Normal   Colour   Texture coordinates
-             0.5f,  0.5f, 0.0f, 0, 0, 0, 1, 0, 0, 1.0f, 1.0f, // top right
-             0.5f, -0.5f, 0.0f, 0, 0, 0, 0, 1, 0, 1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f, 0, 0, 0, 0, 0, 1, 0.0f, 0.0f, // bottom left
-            -0.5f,  0.5f, 0.0f, 0, 0, 0, 1, 1, 1, 0.0f, 1.0f, // top left
-
-             0.5f, 0,  0.5f, 0, 0, 0, 1, 0, 0, 1.0f, 1.0f, // top right
-             0.5f, 0, -0.5f, 0, 0, 0, 0, 1, 0, 1.0f, 0.0f, // bottom right
-            -0.5f, 0, -0.5f, 0, 0, 0, 0, 0, 1, 0.0f, 0.0f, // bottom left
-            -0.5f, 0, 0.5f, 0, 0, 0, 1, 1, 1, 0.0f, 1.0f  // top left
-        };
-
-        private readonly uint[] _indices =
-        {
-            0, 1, 3,
-            1, 2, 3,
-            4, 5, 7,
-            5, 6, 7
-        };
-
-        private int _vertexArrayObject;
-
         private Shader _shader;
 
         private Texture _texture;
@@ -70,9 +46,6 @@ namespace explorer
 
             GL.Enable(EnableCap.DepthTest);
 
-            _vertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(_vertexArrayObject);
-
             _mesh = new CubeMesh[] 
             {
                 // base
@@ -91,18 +64,8 @@ namespace explorer
             //GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             //GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
-            _shader = new Shader("Shaders/shader.vert", "Shaders/lighting.frag");
+            _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
             _shader.Use();
-
-            const int totalStride = (3 + 3 + 3 + 2) * sizeof(float);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, totalStride, 0); // vertex shader layout location 0 position
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, totalStride, 12); // vertex shader layout location 1 normal
-            GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, totalStride, 24); // vertex shader layout location 2 colour
-            GL.EnableVertexAttribArray(2);
-            GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, totalStride, 36); // vertex shader layout location 2 texture
-            GL.EnableVertexAttribArray(3);
 
             _texture = Texture.LoadFromFile("Assets/wall.jpg");
             _texture.Use(TextureUnit.Texture0);
@@ -132,17 +95,17 @@ namespace explorer
             _shader.SetMatrix4("view", _camera.GetViewMatrix());
             _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
 
-            int index = 0;
-            foreach(PointLight light in _lights)
-            {
-                string access = $"pointLights[{index}].";
-                _shader.SetVector3($"{access}objectColor", new Vector3(1.0f, 1.0f, 1.0f));
-                _shader.SetVector3($"{access}lightColor", light.lightColor);
-                _shader.SetVector3($"{access}lightPos", light.lightPos);
-                _shader.SetVector3($"{access}viewPos", _camera.Position);
-                index++;
-            }
-            _shader.SetInt("lightCount", _lights.Length);
+            //int index = 0;
+            //foreach(PointLight light in _lights)
+            //{
+            //    string access = $"pointLights[{index}].";
+            //    _shader.SetVector3($"{access}objectColor", new Vector3(1.0f, 1.0f, 1.0f));
+            //    _shader.SetVector3($"{access}lightColor", light.lightColor);
+            //    _shader.SetVector3($"{access}lightPos", light.lightPos);
+            //    _shader.SetVector3($"{access}viewPos", _camera.Position);
+            //    index++;
+            //}
+            //_shader.SetInt("lightCount", _lights.Length);
 
             foreach (CubeMesh mesh in _mesh)
             {

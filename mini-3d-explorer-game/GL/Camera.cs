@@ -124,9 +124,9 @@ namespace explorer
 
                 // Apply the camera pitch and yaw (we clamp the pitch in the camera class)
                 this.yaw += deltaX * this.sensitivity;
-                if (this.yaw > 89) this.yaw = 89;
-                if (this.yaw < -89) this.yaw = -89;
                 this.pitch -= deltaY * this.sensitivity; // Reversed since y-coordinates range from bottom to top
+                if (this.pitch > 89) this.pitch = 89;
+                if (this.pitch < -89) this.pitch = -89;
 
                 UpdateVectors();
             }
