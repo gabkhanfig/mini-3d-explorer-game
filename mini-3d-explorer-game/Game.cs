@@ -26,7 +26,7 @@ namespace explorer
         // Finally, we add the last position of the mouse so we can calculate the mouse offset easily.
         private Camera _camera;
 
-        private CubeMesh[] _mesh;
+        private RectangularPrismMesh[] _mesh;
 
         private PointLight[] _lights = Array.Empty<PointLight>();
         private bool canSpawnLight = true;
@@ -46,12 +46,12 @@ namespace explorer
 
             GL.Enable(EnableCap.DepthTest);
 
-            _mesh = new CubeMesh[] 
+            _mesh = new RectangularPrismMesh[]
             {
                 // base
-                new CubeMesh(new Vector3(0, -1, 0), 1), new CubeMesh(new Vector3(1, -1, 0), 1), new CubeMesh(new Vector3(2, -1, 0), 1),
-                new CubeMesh(new Vector3(0, -1, 1), 1), new CubeMesh(new Vector3(2, -1, 1), 1),
-                new CubeMesh(new Vector3(0, -1, 2), 1), new CubeMesh(new Vector3(1, -1, 2), 1), new CubeMesh(new Vector3(2, -1, 2), 1),
+                new RectangularPrismMesh(new Vector3(0, -1, 0), new Vector3(1, 2, 1)), new RectangularPrismMesh(new Vector3(1, -1, 0), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 0), new Vector3(1, 1, 1)),
+                new RectangularPrismMesh(new Vector3(0, -1, 1), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 1), new Vector3(1, 1, 1)),
+                new RectangularPrismMesh(new Vector3(0, -1, 2), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(1, -1, 2), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 2), new Vector3(1, 1, 1)),
 
             };
 
@@ -107,7 +107,7 @@ namespace explorer
             //}
             //_shader.SetInt("lightCount", _lights.Length);
 
-            foreach (CubeMesh mesh in _mesh)
+            foreach (RectangularPrismMesh mesh in _mesh)
             {
                 GL.BindVertexArray(mesh.vertexArrayObject);
                 GL.DrawElements(PrimitiveType.Triangles, mesh.indices.Length, DrawElementsType.UnsignedInt, 0);

@@ -116,6 +116,52 @@ namespace explorer
         }
     }
 
+    public class Rectangle
+    {
+        public Vertex v00;
+        public Vertex v01;
+        public Vertex v10;
+        public Vertex v11;
+
+        public Rectangle(Vector3 baseVector, Vector2 dimensions, Vector3 normal)
+        {
+            Vector3 inverseNorm = flipNormal(normal);
+            Vector3 p00 = baseVector;
+            Vector3 p11 = baseVector + (inverseNorm * new Vector3(dimensions.X, dimensions.Y, dimensions.X));
+            Vector3 p01 = Vector3.Zero;
+            Vector3 p10 = Vector3.Zero;
+            if (normal.X == 1 || normal.X == -1)
+            {
+                p01 = baseVector + new Vector3(0, dimensions.Y, 0);
+                p10 = baseVector + new Vector3(0, 0, dimensions.X);
+            }
+            else if (normal.Y == 1 || normal.Y == -1)
+            {
+                p01 = baseVector + new Vector3(dimensions.X, 0, 0);
+                p10 = baseVector + new Vector3(0, 0, dimensions.Y);
+            }
+            else if (normal.Z == 1 || normal.Z == -1)
+            {
+                p01 = baseVector + new Vector3(dimensions.X, 0, 0);
+                p10 = baseVector + new Vector3(0, dimensions.Y, 0);
+            }
+
+            v00 = new Vertex(p00, normal, new Vector3(1, 1, 1), new Vector2(0, 0));
+            v01 = new Vertex(p01, normal, new Vector3(1, 1, 1), new Vector2(0, 1));
+            v10 = new Vertex(p10, normal, new Vector3(1, 1, 1), new Vector2(1, 0));
+            v11 = new Vertex(p11, normal, new Vector3(1, 1, 1), new Vector2(1, 1));
+        }
+
+        static Vector3 flipNormal(Vector3 v)
+        {
+            Vector3 inverse = new Vector3();
+            inverse.X = (v.X == 0) ? 1 : 0;
+            inverse.Y = (v.Y == 0) ? 1 : 0;
+            inverse.Z = (v.Z == 0) ? 1 : 0;
+            return inverse;
+        }
+    }
+
 
     public class CubeMesh
     {
@@ -133,6 +179,91 @@ namespace explorer
             Square south = new Square(new Vector3(position.X + length, position.Y, position.Z), length, Vector3.UnitX);
             Square west = new Square(new Vector3(position.X, position.Y, position.Z + length), length, Vector3.UnitZ);
             Square top = new Square(new Vector3(position.X, position.Y + length, position.Z), length, Vector3.UnitY);
+
+
+            Vertex[] vertices = new Vertex[] // first three vertices are the position, next 3 are colour
+            {
+                bottom.v00, bottom.v01, bottom.v11, bottom.v10,
+
+                north.v00, north.v01, north.v11, north.v10,
+
+                east.v00, east.v01, east.v11, east.v10,
+
+                south.v00, south.v01, south.v11, south.v10,
+
+                west.v00, west.v01, west.v11, west.v10,
+
+                top.v00, top.v01, top.v11, top.v10
+            };
+
+            vertexArrayObject = GL.GenVertexArray();
+            GL.BindVertexArray(vertexArrayObject);
+
+            vertexBufferHandle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float) * (3 + 3 + 3 + 2), vertices, BufferUsageHint.StaticDraw);
+            vertexCount = vertices.Length;
+
+            indices = new uint[]
+            {
+                0, 1, 3, // bottom
+                1, 2, 3,
+
+                4, 5, 7, // north
+                5, 6, 7,
+
+                8, 9, 11, // east
+                9, 10, 11,
+
+                12, 13, 15, // south
+                13, 14, 15,
+
+                16, 17, 19, // west
+                17, 18, 19,
+
+                20, 21, 23, // top
+                21, 22, 23
+            };
+
+            elementBufferHandle = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferHandle);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
+            const int totalStride = (3 + 3 + 3 + 2) * sizeof(float);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, totalStride, 0); // vertex shader layout location 0 position
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, totalStride, 12); // vertex shader layout location 1 normal
+            GL.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, totalStride, 24); // vertex shader layout location 2 colour
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, totalStride, 36); // vertex shader layout location 2 texture
+            GL.EnableVertexAttribArray(3);
+        }
+
+        public void draw()
+        {
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+    }
+
+    public class RectangularPrismMesh
+    {
+        public int vertexArrayObject;
+        public int vertexBufferHandle;
+        public int vertexCount;
+        public int elementBufferHandle;
+        public uint[] indices;
+
+        public RectangularPrismMesh(Vector3 position, Vector3 dimensions)
+        {
+            Rectangle bottom = new Rectangle(position, new Vector2(dimensions.X, dimensions.Z), -Vector3.UnitY);
+            Rectangle north = new Rectangle(position, new Vector2(dimensions.Z, dimensions.Y), -Vector3.UnitX);
+            Rectangle east = new Rectangle(position, new Vector2(dimensions.X, dimensions.Y), -Vector3.UnitZ);
+            Rectangle south = new Rectangle(new Vector3(position.X + dimensions.X, position.Y, position.Z), new Vector2(dimensions.Z, dimensions.Y), Vector3.UnitX);
+            Rectangle west = new Rectangle(new Vector3(position.X, position.Y, position.Z + dimensions.Z), new Vector2(dimensions.X, dimensions.Y), Vector3.UnitZ);
+            Rectangle top = new Rectangle(new Vector3(position.X, position.Y + dimensions.Y, position.Z), new Vector2(dimensions.X, dimensions.Z), Vector3.UnitY);
 
 
             Vertex[] vertices = new Vertex[] // first three vertices are the position, next 3 are colour
