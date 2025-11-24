@@ -248,6 +248,8 @@ namespace explorer
         }
     }
 
+    public delegate void OnCollision();
+
     public class RectangularPrismMesh
     {
         public int vertexArrayObject;
@@ -255,6 +257,9 @@ namespace explorer
         public int vertexCount;
         public int elementBufferHandle;
         public uint[] indices;
+        public Vector3[] aabb;
+        public OnCollision? collisionCallback = null;
+        
 
         public RectangularPrismMesh(Vector3 position, Vector3 dimensions)
         {
@@ -323,6 +328,10 @@ namespace explorer
             GL.EnableVertexAttribArray(2);
             GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, totalStride, 36); // vertex shader layout location 2 texture
             GL.EnableVertexAttribArray(3);
+            
+            aabb = new Vector3[2];
+            aabb[0] = position; // guaranteed to be minimum point (lowest x, y, z)
+            aabb[1] = position + dimensions; // is maximum point (highest x, y, z)
         }
 
         public void draw()
@@ -330,6 +339,13 @@ namespace explorer
             GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+
+        public bool IsWithinBounds(Vector3 position, float threshold = 0.0f)
+        {
+            return position.X >= aabb[0].X - threshold && position.X <= aabb[1].X + threshold &&
+                   position.Y >= aabb[0].Y - threshold && position.Y <= aabb[1].Y + threshold &&
+                   position.Z >= aabb[0].Z - threshold && position.Z <= aabb[1].Z + threshold;
         }
     }
 }

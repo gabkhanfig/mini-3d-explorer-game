@@ -27,6 +27,7 @@ namespace explorer
         private Camera _camera;
 
         private RectangularPrismMesh[] _mesh;
+        private RectangularPrismMesh interactive;
 
         private PointLight[] _lights = Array.Empty<PointLight>();
         private bool canSpawnLight = true;
@@ -40,19 +41,25 @@ namespace explorer
         {
             base.OnLoad();
 
-            Console.WriteLine("Press E to create a light where you are of a random colour");
+            Console.WriteLine("Press E to toggle no clip");
 
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
             GL.Enable(EnableCap.DepthTest);
 
+            interactive = new RectangularPrismMesh(new Vector3(0, 4, 0), new Vector3(0.5f, 0.5f, 0.5f));
             _mesh = new RectangularPrismMesh[]
             {
                 // base
                 new RectangularPrismMesh(new Vector3(0, -1, 0), new Vector3(1, 2, 1)), new RectangularPrismMesh(new Vector3(1, -1, 0), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 0), new Vector3(1, 1, 1)),
                 new RectangularPrismMesh(new Vector3(0, -1, 1), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 1), new Vector3(1, 1, 1)),
                 new RectangularPrismMesh(new Vector3(0, -1, 2), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(1, -1, 2), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 2), new Vector3(1, 1, 1)),
+                interactive, // add interactive object to meshes
+            };
 
+            interactive.collisionCallback = () =>
+            {
+                Console.WriteLine("touching me!");
             };
 
 
@@ -67,7 +74,7 @@ namespace explorer
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
             _shader.Use();
 
-            _texture = Texture.LoadFromFile("Assets/wall.jpg");
+            _texture = Texture.LoadFromFile("Assets/column.jpg");
             _texture.Use(TextureUnit.Texture0);
 
 
@@ -134,31 +141,16 @@ namespace explorer
 
             if(input.IsKeyPressed(Keys.E))
             {
-                if (canSpawnLight == false || _lights.Length == 64) return;
-                canSpawnLight = false;
-
-                Random random = new Random();
-                Vector3 lightCol = new Vector3(
-                    (float)random.NextDouble() * (float)random.NextDouble(),
-                    (float)random.NextDouble() * (float)random.NextDouble(),
-                    (float)random.NextDouble() * (float)random.NextDouble()
-                );
-
-                PointLight light = new PointLight();
-                light.lightColor = lightCol;
-                light.lightPos = _camera.Position;
-
-                Console.WriteLine($"Creating new light at ({light.lightPos.X}, {light.lightPos.Y}, {light.lightPos.Z}), with colour ({light.lightColor.X}, {light.lightColor.Y}, {light.lightColor.Z})");
-                
-                AddLight(light);
+                this._camera.noClip = !this._camera.noClip;
+                Console.WriteLine($"No clip = {(this._camera.noClip ? "On" : "Off")}");
             }
 
             if(input.IsKeyReleased(Keys.E))
             {
                 canSpawnLight = true;
             }
-  
-            _camera.Update((float)e.Time, KeyboardState, MouseState);
+
+            _camera.Update((float)e.Time, KeyboardState, MouseState, _mesh);
         }
 
         //// In the mouse wheel function, we manage all the zooming of the camera.

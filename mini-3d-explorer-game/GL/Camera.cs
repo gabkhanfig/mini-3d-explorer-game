@@ -41,6 +41,7 @@ namespace explorer
         public float sensitivity = 0.2f;
 
         public float moveSpeed = 1.5f;
+        public bool noClip = false;
 
         public Camera(Vector3 position, float aspectRatio)
         {
@@ -81,33 +82,76 @@ namespace explorer
             up = Vector3.Normalize(Vector3.Cross(right, front));
         }
 
-        public void Update(float deltaTime, KeyboardState keyboardState, MouseState mouseState)
+        public void Update(float deltaTime, KeyboardState keyboardState, MouseState mouseState, RectangularPrismMesh[] meshes)
         {
+            Vector3 wishPos = this.Position;
+
             // WASD
             if (keyboardState.IsKeyDown(Keys.W))
             {
-                this.Position += this.front * this.moveSpeed * deltaTime; // Forward
+                wishPos += this.front * this.moveSpeed * deltaTime; // Forward
             }
 
             if (keyboardState.IsKeyDown(Keys.S))
             {
-                this.Position -= this.front * this.moveSpeed * deltaTime; // Backwards
+                wishPos -= this.front * this.moveSpeed * deltaTime; // Backwards
             }
             if (keyboardState.IsKeyDown(Keys.A))
             {
-                this.Position -= this.right * this.moveSpeed * deltaTime; // Left
+                wishPos -= this.right * this.moveSpeed * deltaTime; // Left
             }
             if (keyboardState.IsKeyDown(Keys.D))
             {
-                this.Position += this.right * this.moveSpeed * deltaTime; // Right
+                wishPos += this.right * this.moveSpeed * deltaTime; // Right
             }
             if (keyboardState.IsKeyDown(Keys.Space))
             {
-                this.Position += this.up * this.moveSpeed * deltaTime; // Up
+                wishPos += this.up * this.moveSpeed * deltaTime; // Up
             }
             if (keyboardState.IsKeyDown(Keys.LeftShift))
             {
-                this.Position -= this.up * this.moveSpeed * deltaTime; // Down
+                wishPos -= this.up * this.moveSpeed * deltaTime; // Down
+            }
+
+            if(noClip == false)
+            {
+                // AABB stuff
+                // Don't want to see into the meshes
+                float collisionThreshold = 0.03f;
+                foreach (RectangularPrismMesh mesh in meshes)
+                {
+                    if (mesh.IsWithinBounds(wishPos, collisionThreshold))
+                    {
+                        float distToMinX = wishPos.X - (mesh.aabb[0].X - collisionThreshold);
+                        float distToMaxX = (mesh.aabb[1].X + collisionThreshold) - wishPos.X;
+                        float distToMinY = wishPos.Y - (mesh.aabb[0].Y - collisionThreshold);
+                        float distToMaxY = (mesh.aabb[1].Y + collisionThreshold) - wishPos.Y;
+                        float distToMinZ = wishPos.Z - (mesh.aabb[0].Z - collisionThreshold);
+                        float distToMaxZ = (mesh.aabb[1].Z + collisionThreshold) - wishPos.Z;
+
+                        float minDist = MathF.Min(MathF.Min(MathF.Min(distToMinX, distToMaxX),
+                                                  MathF.Min(distToMinY, distToMaxY)),
+                                                  MathF.Min(distToMinZ, distToMaxZ));
+
+                        if (minDist == distToMinX) wishPos.X = mesh.aabb[0].X - collisionThreshold;
+                        else if (minDist == distToMaxX) wishPos.X = mesh.aabb[1].X + collisionThreshold;
+                        else if (minDist == distToMinY) wishPos.Y = mesh.aabb[0].Y - collisionThreshold;
+                        else if (minDist == distToMaxY) wishPos.Y = mesh.aabb[1].Y + collisionThreshold;
+                        else if (minDist == distToMinZ) wishPos.Z = mesh.aabb[0].Z - collisionThreshold;
+                        else if (minDist == distToMaxZ) wishPos.Z = mesh.aabb[1].Z + collisionThreshold;
+                    }
+                }
+            }
+            
+            this.Position = wishPos;
+
+            foreach (RectangularPrismMesh mesh in meshes)
+            {
+                float interactionRange = 0.1f;
+                if (mesh.collisionCallback != null && mesh.IsWithinBounds(wishPos, interactionRange))
+                {
+                    mesh.collisionCallback();
+                }
             }
 
             // Mouse look at
