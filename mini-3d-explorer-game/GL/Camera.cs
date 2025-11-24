@@ -147,7 +147,7 @@ namespace explorer
 
             foreach (RectangularPrismMesh mesh in meshes)
             {
-                float interactionRange = 0.1f;
+                float interactionRange = 0.2f;
                 if (mesh.collisionCallback != null && mesh.IsWithinBounds(wishPos, interactionRange))
                 {
                     mesh.collisionCallback();

@@ -16,7 +16,11 @@ namespace explorer
     {
         private Shader _shader;
 
-        private Texture _texture;
+        private Texture wallTexture;
+        private Texture columnTexture;
+        private Texture shinglesTexture;
+        private Texture woodTexture;
+        private Texture crateTexture;
 
         // The view and projection matrices have been removed as we don't need them here anymore.
         // They can now be found in the new camera class.
@@ -31,6 +35,8 @@ namespace explorer
 
         private PointLight[] _lights = Array.Empty<PointLight>();
         private bool canSpawnLight = true;
+        private float crateCollisionTime = 0;
+        private int score = 0;
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(gameWindowSettings, nativeWindowSettings)
@@ -42,49 +48,56 @@ namespace explorer
             base.OnLoad();
 
             Console.WriteLine("Press E to toggle no clip");
+            Console.WriteLine("Press Q near the crate to increase your score");
 
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
             GL.Enable(EnableCap.DepthTest);
 
-            interactive = new RectangularPrismMesh(new Vector3(0, 4, 0), new Vector3(0.5f, 0.5f, 0.5f));
-            _mesh = new RectangularPrismMesh[]
-            {
-                // base
-                new RectangularPrismMesh(new Vector3(0, -1, 0), new Vector3(1, 2, 1)), new RectangularPrismMesh(new Vector3(1, -1, 0), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 0), new Vector3(1, 1, 1)),
-                new RectangularPrismMesh(new Vector3(0, -1, 1), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 1), new Vector3(1, 1, 1)),
-                new RectangularPrismMesh(new Vector3(0, -1, 2), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(1, -1, 2), new Vector3(1, 1, 1)), new RectangularPrismMesh(new Vector3(2, -1, 2), new Vector3(1, 1, 1)),
-                interactive, // add interactive object to meshes
-            };
-
-            interactive.collisionCallback = () =>
-            {
-                Console.WriteLine("touching me!");
-            };
-
-
-            //_vertexBufferObject = GL.GenBuffer();
-            //GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            //GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
-
-            //_elementBufferObject = GL.GenBuffer();
-            //GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
-            //GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
-
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
             _shader.Use();
 
-            _texture = Texture.LoadFromFile("Assets/column.jpg");
-            _texture.Use(TextureUnit.Texture0);
-
+            wallTexture = Texture.LoadFromFile("Assets/wall.jpg");
+            columnTexture = Texture.LoadFromFile("Assets/column.jpg");
+            shinglesTexture = Texture.LoadFromFile("Assets/shingles.jpg");
+            woodTexture = Texture.LoadFromFile("Assets/wood.jpg");
+            crateTexture = Texture.LoadFromFile("Assets/crate.jpg");
 
             _shader.SetInt("ourTexture", 0);
 
-            // We initialize the camera so that it is 3 units back from where the rectangle is.
-            // We also give it the proper aspect ratio.
-            _camera = new Camera(new Vector3(0, 0.5f, 4), Size.X / (float)Size.Y);
 
-            // We make the mouse cursor invisible and captured so we can have proper FPS-camera movement.
+
+            interactive = new RectangularPrismMesh(new Vector3(1.25f, 0, 1.25f), new Vector3(0.5f, 0.5f, 0.5f), crateTexture);
+            _mesh = new RectangularPrismMesh[]
+            {
+                // base
+                new RectangularPrismMesh(new Vector3(0, -1, 0), new Vector3(3, 1, 3), woodTexture),
+                
+                // columns
+                new RectangularPrismMesh(new Vector3(0, 0, 0), new Vector3(1, 2, 1), columnTexture),
+                new RectangularPrismMesh(new Vector3(2, 0, 0), new Vector3(1, 2, 1), columnTexture),
+                new RectangularPrismMesh(new Vector3(2, 0, 2), new Vector3(1, 2, 1), columnTexture),
+                new RectangularPrismMesh(new Vector3(0, 0, 2), new Vector3(1, 2, 1), columnTexture),
+
+
+                // roof
+                new RectangularPrismMesh(new Vector3(0, 2, 0), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(1, 2, 0), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(2, 2, 0), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(0, 2, 1), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(1, 3, 1), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(2, 2, 1), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(0, 2, 2), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(1, 2, 2), new Vector3(1, 1, 1), shinglesTexture),
+                new RectangularPrismMesh(new Vector3(2, 2, 2), new Vector3(1, 1, 1), shinglesTexture),
+
+                interactive, // add interactive object to meshes
+            };
+
+            interactive.collisionCallback = this.crateCollide;
+
+
+            _camera = new Camera(new Vector3(0, 0.5f, 4), Size.X / (float)Size.Y);
             CursorState = CursorState.Grabbed;
         }
 
@@ -94,7 +107,6 @@ namespace explorer
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            _texture.Use(TextureUnit.Texture0);
             _shader.Use();
 
             var model = Matrix4.Identity;
@@ -116,6 +128,7 @@ namespace explorer
 
             foreach (RectangularPrismMesh mesh in _mesh)
             {
+                mesh._tex.Use(TextureUnit.Texture0);
                 GL.BindVertexArray(mesh.vertexArrayObject);
                 GL.DrawElements(PrimitiveType.Triangles, mesh.indices.Length, DrawElementsType.UnsignedInt, 0);
             }
@@ -145,9 +158,14 @@ namespace explorer
                 Console.WriteLine($"No clip = {(this._camera.noClip ? "On" : "Off")}");
             }
 
-            if(input.IsKeyReleased(Keys.E))
+            if(crateCollisionTime > 0)
             {
-                canSpawnLight = true;
+                crateCollisionTime -= (float)e.Time;
+                if (input.IsKeyPressed(Keys.Q))
+                {
+                    this.score += 1;
+                    Console.WriteLine($"Your score is {this.score}");
+                }
             }
 
             _camera.Update((float)e.Time, KeyboardState, MouseState, _mesh);
@@ -175,6 +193,11 @@ namespace explorer
         {
             Array.Resize(ref _lights, _lights.Length + 1);
             _lights[_lights.Length - 1] = light;
+        }
+
+        private void crateCollide()
+        {
+            crateCollisionTime = 0.1f;
         }
     }
 }

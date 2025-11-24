@@ -1,4 +1,4 @@
-﻿using OpenTK.Graphics.OpenGL;
+﻿using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -146,10 +146,21 @@ namespace explorer
                 p10 = baseVector + new Vector3(0, dimensions.Y, 0);
             }
 
-            v00 = new Vertex(p00, normal, new Vector3(1, 1, 1), new Vector2(0, 0));
-            v01 = new Vertex(p01, normal, new Vector3(1, 1, 1), new Vector2(0, 1));
-            v10 = new Vertex(p10, normal, new Vector3(1, 1, 1), new Vector2(1, 0));
-            v11 = new Vertex(p11, normal, new Vector3(1, 1, 1), new Vector2(1, 1));
+            // east / west uvs are flipped 90 degrees normally
+            if (normal.Z == 1 || normal.Z == -1)
+            {
+                v00 = new Vertex(p00, normal, new Vector3(1, 1, 1), new Vector2(0, 0));
+                v01 = new Vertex(p01, normal, new Vector3(1, 1, 1), new Vector2(1, 0));
+                v10 = new Vertex(p10, normal, new Vector3(1, 1, 1), new Vector2(0, 1));
+                v11 = new Vertex(p11, normal, new Vector3(1, 1, 1), new Vector2(1, 1));
+            }
+            else
+            {
+                v00 = new Vertex(p00, normal, new Vector3(1, 1, 1), new Vector2(0, 0));
+                v01 = new Vertex(p01, normal, new Vector3(1, 1, 1), new Vector2(0, 1));
+                v10 = new Vertex(p10, normal, new Vector3(1, 1, 1), new Vector2(1, 0));
+                v11 = new Vertex(p11, normal, new Vector3(1, 1, 1), new Vector2(1, 1));
+            }
         }
 
         static Vector3 flipNormal(Vector3 v)
@@ -259,10 +270,13 @@ namespace explorer
         public uint[] indices;
         public Vector3[] aabb;
         public OnCollision? collisionCallback = null;
+        public Texture _tex;
         
 
-        public RectangularPrismMesh(Vector3 position, Vector3 dimensions)
+        public RectangularPrismMesh(Vector3 position, Vector3 dimensions, Texture tex)
         {
+            _tex = tex;
+
             Rectangle bottom = new Rectangle(position, new Vector2(dimensions.X, dimensions.Z), -Vector3.UnitY);
             Rectangle north = new Rectangle(position, new Vector2(dimensions.Z, dimensions.Y), -Vector3.UnitX);
             Rectangle east = new Rectangle(position, new Vector2(dimensions.X, dimensions.Y), -Vector3.UnitZ);
@@ -336,6 +350,7 @@ namespace explorer
 
         public void draw()
         {
+            _tex.Use(TextureUnit.Texture0);
             GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferHandle);
             GL.DrawArrays(PrimitiveType.Triangles, 0, vertexCount);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
